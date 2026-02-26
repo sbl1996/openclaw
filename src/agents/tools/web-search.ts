@@ -1,7 +1,9 @@
 import { Type } from "@sinclair/typebox";
+import { ProxyAgent, fetch as undiciFetch } from "undici";
 import { formatCliCommand } from "../../cli/command-format.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import { logVerbose } from "../../globals.js";
+import { wrapFetchWithAbortSignal } from "../../infra/fetch.js";
 import { fetchWithSsrFGuard } from "../../infra/net/fetch-guard.js";
 import { wrapWebContent } from "../../security/external-content.js";
 import { normalizeSecretInput } from "../../utils/normalize-secret-input.js";
@@ -290,6 +292,12 @@ function resolveSearchApiKey(search?: WebSearchConfig): string | undefined {
       : "";
   const fromEnv = normalizeSecretInput(process.env.BRAVE_API_KEY);
   return fromConfig || fromEnv || undefined;
+}
+
+function resolveSearchProxy(search?: WebSearchConfig): string | undefined {
+  const fromConfig =
+    search && "proxy" in search && typeof search.proxy === "string" ? search.proxy.trim() : "";
+  return fromConfig || undefined;
 }
 
 function missingSearchKeyPayload(provider: (typeof SEARCH_PROVIDERS)[number]) {
@@ -1089,6 +1097,7 @@ async function runWebSearch(params: {
   timeoutSeconds: number;
   cacheTtlMs: number;
   provider: (typeof SEARCH_PROVIDERS)[number];
+  searchProxy?: string;
   country?: string;
   search_lang?: string;
   ui_lang?: string;
@@ -1103,7 +1112,7 @@ async function runWebSearch(params: {
 }): Promise<Record<string, unknown>> {
   const cacheKey = normalizeCacheKey(
     params.provider === "brave"
-      ? `${params.provider}:${params.query}:${params.count}:${params.country || "default"}:${params.search_lang || "default"}:${params.ui_lang || "default"}:${params.freshness || "default"}`
+      ? `${params.provider}:${params.query}:${params.count}:${params.country || "default"}:${params.search_lang || "default"}:${params.ui_lang || "default"}:${params.freshness || "default"}:${params.searchProxy ? "proxy" : "direct"}`
       : params.provider === "perplexity"
         ? `${params.provider}:${params.query}:${params.perplexityBaseUrl ?? DEFAULT_PERPLEXITY_BASE_URL}:${params.perplexityModel ?? DEFAULT_PERPLEXITY_MODEL}:${params.freshness || "default"}`
         : params.provider === "kimi"
@@ -1232,6 +1241,26 @@ async function runWebSearch(params: {
     throw new Error("Unsupported web search provider.");
   }
 
+  const braveFetch = (() => {
+    const proxy = params.searchProxy?.trim();
+    if (!proxy) {
+      return fetch;
+    }
+    try {
+      const agent = new ProxyAgent(proxy);
+      const fetcher = ((input: RequestInfo | URL, init?: RequestInit) =>
+        undiciFetch(input as string | URL, {
+          ...(init as Record<string, unknown>),
+          dispatcher: agent,
+        }) as unknown as Promise<Response>) as typeof fetch;
+      logVerbose("web_search: brave proxy enabled");
+      return wrapFetchWithAbortSignal(fetcher);
+    } catch (err) {
+      logVerbose(`web_search: invalid brave proxy; using direct fetch (${String(err)})`);
+      return fetch;
+    }
+  })();
+
   const url = new URL(BRAVE_SEARCH_ENDPOINT);
   url.searchParams.set("q", params.query);
   url.searchParams.set("count", String(params.count));
@@ -1248,7 +1277,7 @@ async function runWebSearch(params: {
     url.searchParams.set("freshness", params.freshness);
   }
 
-  const res = await fetch(url.toString(), {
+  const res = await braveFetch(url.toString(), {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -1396,6 +1425,7 @@ export function createWebSearchTool(options?: {
         timeoutSeconds: resolveTimeoutSeconds(search?.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS),
         cacheTtlMs: resolveCacheTtlMs(search?.cacheTtlMinutes, DEFAULT_CACHE_TTL_MINUTES),
         provider,
+        searchProxy: resolveSearchProxy(search),
         country,
         search_lang,
         ui_lang,
@@ -1430,6 +1460,7 @@ export const __testing = {
   resolveGrokModel,
   resolveGrokInlineCitations,
   extractGrokContent,
+  resolveSearchProxy,
   resolveKimiApiKey,
   resolveKimiModel,
   resolveKimiBaseUrl,

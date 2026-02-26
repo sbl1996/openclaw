@@ -266,6 +266,7 @@ export const ToolsWebSearchSchema = z
         z.literal("kimi"),
       ])
       .optional(),
+    proxy: z.string().optional(),
     apiKey: z.string().optional().register(sensitive),
     maxResults: z.number().int().positive().optional(),
     timeoutSeconds: z.number().int().positive().optional(),

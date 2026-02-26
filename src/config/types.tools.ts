@@ -432,6 +432,8 @@ export type ToolsConfig = {
       enabled?: boolean;
       /** Search provider ("brave", "perplexity", "grok", "gemini", or "kimi"). */
       provider?: "brave" | "perplexity" | "grok" | "gemini" | "kimi";
+      /** Optional HTTP(S) proxy URL for web_search requests (currently used by Brave provider). */
+      proxy?: string;
       /** Brave Search API key (optional; defaults to BRAVE_API_KEY env var). */
       apiKey?: string;
       /** Default search results count (1-10). */

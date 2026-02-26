@@ -14,6 +14,7 @@ const {
   resolveGrokModel,
   resolveGrokInlineCitations,
   extractGrokContent,
+  resolveSearchProxy,
   resolveKimiApiKey,
   resolveKimiModel,
   resolveKimiBaseUrl,
@@ -64,6 +65,19 @@ describe("web_search perplexity baseUrl defaults", () => {
   it("defaults to OpenRouter for unknown config key formats", () => {
     expect(resolvePerplexityBaseUrl(undefined, "config", "weird-key")).toBe(
       "https://openrouter.ai/api/v1",
+    );
+  });
+});
+
+describe("web_search proxy config resolution", () => {
+  it("returns undefined when proxy is not set", () => {
+    expect(resolveSearchProxy(undefined)).toBeUndefined();
+    expect(resolveSearchProxy({})).toBeUndefined();
+  });
+
+  it("trims and returns configured proxy", () => {
+    expect(resolveSearchProxy({ proxy: "  http://proxy.local:7890  " })).toBe(
+      "http://proxy.local:7890",
     );
   });
 });
