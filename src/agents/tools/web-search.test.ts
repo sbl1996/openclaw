@@ -11,6 +11,7 @@ const {
   resolveGrokModel,
   resolveGrokInlineCitations,
   extractGrokContent,
+  resolveSearchProxy,
   resolveKimiApiKey,
   resolveKimiModel,
   resolveKimiBaseUrl,
@@ -19,6 +20,18 @@ const {
 
 const kimiApiKeyEnv = ["KIMI_API", "KEY"].join("_");
 const moonshotApiKeyEnv = ["MOONSHOT_API", "KEY"].join("_");
+describe("web_search proxy config resolution", () => {
+  it("returns undefined when proxy is not set", () => {
+    expect(resolveSearchProxy(undefined)).toBeUndefined();
+    expect(resolveSearchProxy({})).toBeUndefined();
+  });
+
+  it("trims and returns configured proxy", () => {
+    expect(resolveSearchProxy({ proxy: "  http://proxy.local:7890  " })).toBe(
+      "http://proxy.local:7890",
+    );
+  });
+});
 
 describe("web_search brave language param normalization", () => {
   it("normalizes and auto-corrects swapped Brave language params", () => {

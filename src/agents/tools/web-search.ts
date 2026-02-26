@@ -442,6 +442,25 @@ function resolveSearchApiKey(search?: WebSearchConfig): string | undefined {
   return fromConfig || fromEnv || undefined;
 }
 
+function resolveSearchProxy(search?: WebSearchConfig): string | undefined {
+  const fromConfig =
+    search && "proxy" in search && typeof search.proxy === "string" ? search.proxy.trim() : "";
+  if (!fromConfig) {
+    return undefined;
+  }
+  try {
+    const parsed = new URL(fromConfig);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      logVerbose("web_search: ignoring tools.web.search.proxy with unsupported protocol");
+      return undefined;
+    }
+    return fromConfig;
+  } catch {
+    logVerbose("web_search: ignoring invalid tools.web.search.proxy URL");
+    return undefined;
+  }
+}
+
 function missingSearchKeyPayload(provider: (typeof SEARCH_PROVIDERS)[number]) {
   if (provider === "perplexity") {
     return {
@@ -679,6 +698,7 @@ async function withTrustedWebSearchEndpoint<T>(
     url: string;
     timeoutSeconds: number;
     init: RequestInit;
+    proxy?: string;
   },
   run: (response: Response) => Promise<T>,
 ): Promise<T> {
@@ -687,6 +707,7 @@ async function withTrustedWebSearchEndpoint<T>(
       url: params.url,
       init: params.init,
       timeoutSeconds: params.timeoutSeconds,
+      proxy: params.proxy,
     },
     async ({ response }) => run(response),
   );
@@ -1220,6 +1241,7 @@ async function runWebSearch(params: {
   timeoutSeconds: number;
   cacheTtlMs: number;
   provider: (typeof SEARCH_PROVIDERS)[number];
+  searchProxy?: string;
   country?: string;
   language?: string;
   search_lang?: string;
@@ -1245,7 +1267,7 @@ async function runWebSearch(params: {
           ? `${params.kimiBaseUrl ?? DEFAULT_KIMI_BASE_URL}:${params.kimiModel ?? DEFAULT_KIMI_MODEL}`
           : "";
   const cacheKey = normalizeCacheKey(
-    `${params.provider}:${params.query}:${params.count}:${params.country || "default"}:${params.search_lang || params.language || "default"}:${params.ui_lang || "default"}:${params.freshness || "default"}:${params.dateAfter || "default"}:${params.dateBefore || "default"}:${params.searchDomainFilter?.join(",") || "default"}:${params.maxTokens || "default"}:${params.maxTokensPerPage || "default"}:${providerSpecificKey}`,
+    `${params.provider}:${params.query}:${params.count}:${params.country || "default"}:${params.search_lang || params.language || "default"}:${params.ui_lang || "default"}:${params.freshness || "default"}:${params.dateAfter || "default"}:${params.dateBefore || "default"}:${params.searchDomainFilter?.join(",") || "default"}:${params.maxTokens || "default"}:${params.maxTokensPerPage || "default"}:${params.provider === "brave" ? (params.searchProxy ? "proxy" : "direct") : "default"}:${providerSpecificKey}`,
   );
   const cached = readCache(SEARCH_CACHE, cacheKey);
   if (cached) {
@@ -1401,6 +1423,7 @@ async function runWebSearch(params: {
     {
       url: url.toString(),
       timeoutSeconds: params.timeoutSeconds,
+      proxy: params.searchProxy,
       init: {
         method: "GET",
         headers: {
@@ -1645,6 +1668,7 @@ export function createWebSearchTool(options?: {
         timeoutSeconds: resolveTimeoutSeconds(search?.timeoutSeconds, DEFAULT_TIMEOUT_SECONDS),
         cacheTtlMs: resolveCacheTtlMs(search?.cacheTtlMinutes, DEFAULT_CACHE_TTL_MINUTES),
         provider,
+        searchProxy: resolveSearchProxy(search),
         country,
         language,
         search_lang: resolvedSearchLang,
@@ -1679,6 +1703,7 @@ export const __testing = {
   resolveGrokModel,
   resolveGrokInlineCitations,
   extractGrokContent,
+  resolveSearchProxy,
   resolveKimiApiKey,
   resolveKimiModel,
   resolveKimiBaseUrl,
