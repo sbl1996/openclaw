@@ -10,6 +10,23 @@ const { __testing } = await import("../agents/tools/web-search.js");
 const { resolveSearchProvider } = __testing;
 
 describe("web search provider config", () => {
+  it("accepts brave provider with top-level proxy config", () => {
+    const res = validateConfigObject({
+      tools: {
+        web: {
+          search: {
+            enabled: true,
+            provider: "brave",
+            apiKey: "test-key",
+            proxy: "http://proxy.local:8080",
+          },
+        },
+      },
+    });
+
+    expect(res.ok).toBe(true);
+  });
+
   it("accepts perplexity provider and config", () => {
     const res = validateConfigObject(
       buildWebSearchProviderConfig({
