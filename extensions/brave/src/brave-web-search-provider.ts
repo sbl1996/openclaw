@@ -131,6 +131,22 @@ function resolveBraveApiKey(searchConfig?: SearchConfigRecord): string | undefin
   );
 }
 
+function resolveSearchProxy(searchConfig?: SearchConfigRecord): string | undefined {
+  if (typeof searchConfig?.proxy !== "string") {
+    return undefined;
+  }
+  const trimmed = searchConfig.proxy.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? trimmed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function normalizeBraveSearchLang(value: string | undefined): string | undefined {
   if (!value) {
     return undefined;
@@ -206,6 +222,7 @@ async function runBraveLlmContextSearch(params: {
   query: string;
   apiKey: string;
   timeoutSeconds: number;
+  searchProxy?: string;
   country?: string;
   search_lang?: string;
   freshness?: string;
@@ -234,6 +251,7 @@ async function runBraveLlmContextSearch(params: {
     {
       url: url.toString(),
       timeoutSeconds: params.timeoutSeconds,
+      proxy: params.searchProxy,
       init: {
         method: "GET",
         headers: {
@@ -259,6 +277,7 @@ async function runBraveWebSearch(params: {
   count: number;
   apiKey: string;
   timeoutSeconds: number;
+  searchProxy?: string;
   country?: string;
   search_lang?: string;
   ui_lang?: string;
@@ -295,6 +314,7 @@ async function runBraveWebSearch(params: {
     {
       url: url.toString(),
       timeoutSeconds: params.timeoutSeconds,
+      proxy: params.searchProxy,
       init: {
         method: "GET",
         headers: {
@@ -495,6 +515,7 @@ function createBraveToolDefinition(
         braveMode,
         query,
         resolveSearchCount(count, DEFAULT_SEARCH_COUNT),
+        resolveSearchProxy(searchConfig) ? "proxy" : "direct",
         country,
         normalizedLanguage.search_lang,
         normalizedLanguage.ui_lang,
@@ -510,12 +531,14 @@ function createBraveToolDefinition(
       const start = Date.now();
       const timeoutSeconds = resolveSearchTimeoutSeconds(searchConfig);
       const cacheTtlMs = resolveSearchCacheTtlMs(searchConfig);
+      const searchProxy = resolveSearchProxy(searchConfig);
 
       if (braveMode === "llm-context") {
         const { results, sources } = await runBraveLlmContextSearch({
           query,
           apiKey,
           timeoutSeconds,
+          searchProxy,
           country: country ?? undefined,
           search_lang: normalizedLanguage.search_lang,
           freshness,
@@ -549,6 +572,7 @@ function createBraveToolDefinition(
         count: resolveSearchCount(count, DEFAULT_SEARCH_COUNT),
         apiKey,
         timeoutSeconds,
+        searchProxy,
         country: country ?? undefined,
         search_lang: normalizedLanguage.search_lang,
         ui_lang: normalizedLanguage.ui_lang,
@@ -610,6 +634,7 @@ export function createBraveWebSearchProvider(): WebSearchProviderPlugin {
 export const __testing = {
   normalizeFreshness,
   normalizeBraveLanguageParams,
+  resolveSearchProxy,
   resolveBraveMode,
   mapBraveLlmContextResults,
 } as const;

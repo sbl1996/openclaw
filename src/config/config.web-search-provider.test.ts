@@ -172,6 +172,23 @@ describe("web search provider config", () => {
     );
   });
 
+  it("accepts brave provider with top-level proxy config", () => {
+    const res = validateConfigObjectWithPlugins({
+      tools: {
+        web: {
+          search: {
+            enabled: true,
+            provider: "brave",
+            apiKey: "test-key",
+            proxy: "http://proxy.local:8080",
+          },
+        },
+      },
+    });
+
+    expect(res.ok).toBe(true);
+  });
+
   it("accepts perplexity provider and config", () => {
     const res = validateConfigObjectWithPlugins(
       buildWebSearchProviderConfig({

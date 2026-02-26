@@ -78,6 +78,7 @@ export async function withTrustedWebSearchEndpoint<T>(
   params: {
     url: string;
     timeoutSeconds: number;
+    proxy?: string;
     init: RequestInit;
   },
   run: (response: Response) => Promise<T>,
@@ -87,6 +88,7 @@ export async function withTrustedWebSearchEndpoint<T>(
       url: params.url,
       init: params.init,
       timeoutSeconds: params.timeoutSeconds,
+      proxy: params.proxy,
     },
     async ({ response }) => run(response),
   );

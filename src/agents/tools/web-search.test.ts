@@ -119,6 +119,19 @@ describe("web_search perplexity compatibility routing", () => {
   });
 });
 
+describe("web_search proxy config resolution", () => {
+  it("returns undefined when proxy is not set", () => {
+    expect(resolveSearchProxy(undefined)).toBeUndefined();
+    expect(resolveSearchProxy({})).toBeUndefined();
+  });
+
+  it("trims and returns configured proxy", () => {
+    expect(resolveSearchProxy({ proxy: "  http://proxy.local:7890  " })).toBe(
+      "http://proxy.local:7890",
+    );
+  });
+});
+
 describe("web_search brave language param normalization", () => {
   it("normalizes and auto-corrects swapped Brave language params", () => {
     expect(normalizeBraveLanguageParams({ search_lang: "tr-TR", ui_lang: "tr" })).toEqual({

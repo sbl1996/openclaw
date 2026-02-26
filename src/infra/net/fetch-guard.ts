@@ -34,8 +34,8 @@ export type GuardedFetchOptions = {
   dispatcherPolicy?: PinnedDispatcherPolicy;
   mode?: GuardedFetchMode;
   pinDns?: boolean;
-  /** @deprecated use `mode: "trusted_env_proxy"` for trusted/operator-controlled URLs. */
-  proxy?: "env";
+  /** @deprecated prefer `mode: "trusted_env_proxy"` for env proxies; explicit proxy URLs are still supported. */
+  proxy?: string;
   /**
    * @deprecated use `mode: "trusted_env_proxy"` instead.
    */
@@ -177,13 +177,20 @@ export async function fetchWithSsrFGuard(params: GuardedFetchOptions): Promise<G
         lookupFn: params.lookupFn,
         policy: params.policy,
       });
-      const canUseTrustedEnvProxy =
-        mode === GUARDED_FETCH_MODE.TRUSTED_ENV_PROXY && hasProxyEnvConfigured();
-      if (canUseTrustedEnvProxy) {
-        const { EnvHttpProxyAgent } = loadUndiciRuntimeDeps();
-        dispatcher = new EnvHttpProxyAgent();
-      } else if (params.pinDns !== false) {
-        dispatcher = createPinnedDispatcher(pinned, params.dispatcherPolicy, params.policy);
+      const explicitProxy =
+        typeof params.proxy === "string" && params.proxy.trim() ? params.proxy.trim() : undefined;
+      if (explicitProxy && explicitProxy !== "env") {
+        const { ProxyAgent } = loadUndiciRuntimeDeps();
+        dispatcher = new ProxyAgent(explicitProxy);
+      } else {
+        const canUseTrustedEnvProxy =
+          mode === GUARDED_FETCH_MODE.TRUSTED_ENV_PROXY && hasProxyEnvConfigured();
+        if (canUseTrustedEnvProxy) {
+          const { EnvHttpProxyAgent } = loadUndiciRuntimeDeps();
+          dispatcher = new EnvHttpProxyAgent();
+        } else if (params.pinDns !== false) {
+          dispatcher = createPinnedDispatcher(pinned, params.dispatcherPolicy, params.policy);
+        }
       }
 
       const init: RequestInit & { dispatcher?: Dispatcher } = {
