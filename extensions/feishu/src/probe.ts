@@ -6,9 +6,10 @@ import type { FeishuProbeResult } from "./types.js";
  * Gateway health checks call probeFeishu() every minute; without caching this
  * burns ~43,200 calls/month, easily exceeding Feishu's free-tier quota.
  * Successful bot info is effectively static, while failures are cached briefly
- * to avoid hammering the API during transient outages. */
+ * to avoid hammering the API during transient outages. A 60-min success TTL
+ * cuts successful calls to ~720/month while failures still retry after 1 minute. */
 const probeCache = new Map<string, { result: FeishuProbeResult; expiresAt: number }>();
-const PROBE_SUCCESS_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const PROBE_SUCCESS_TTL_MS = 60 * 60 * 1000; // 60 minutes
 const PROBE_ERROR_TTL_MS = 60 * 1000; // 1 minute
 const MAX_PROBE_CACHE_SIZE = 64;
 export const FEISHU_PROBE_REQUEST_TIMEOUT_MS = 10_000;

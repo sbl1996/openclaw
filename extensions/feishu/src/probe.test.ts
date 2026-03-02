@@ -133,7 +133,7 @@ describe("probeFeishu", () => {
       expect(requestFn).toHaveBeenCalledTimes(1);
 
       // Advance time past the success TTL
-      vi.advanceTimersByTime(10 * 60 * 1000 + 1);
+      vi.advanceTimersByTime(60 * 60 * 1000 + 1);
 
       await probeFeishu(creds);
       expect(requestFn).toHaveBeenCalledTimes(2);
