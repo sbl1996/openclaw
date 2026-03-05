@@ -100,8 +100,18 @@ export function mergeStreamingText(
   if (previous.includes(next)) {
     return previous;
   }
-  // Fallback for fragmented partial chunks: append as-is to avoid losing tokens.
-  return `${previous}${next}`;
+  // Preserve cumulative updates even when formatting shifts mean the new text
+  // no longer starts with the previous text exactly (for example after trimming,
+  // directive stripping, or newline normalization).
+  let overlap = 0;
+  const maxOverlap = Math.min(previous.length, next.length);
+  for (let size = maxOverlap; size > 0; size -= 1) {
+    if (previous.slice(-size) === next.slice(0, size)) {
+      overlap = size;
+      break;
+    }
+  }
+  return overlap > 0 ? `${previous}${next.slice(overlap)}` : `${previous}${next}`;
 }
 
 /** Streaming card session manager */

@@ -83,19 +83,27 @@ export function buildReplyPayloads(params: {
     )
     .filter(isRenderablePayload);
 
+  const resolvedMessageProvider = resolveOriginMessageProvider({
+    originatingChannel: params.originatingChannel,
+    provider: params.messageProvider,
+  });
+  const preservesFinalPayloadAfterBlockStreaming = resolvedMessageProvider === "feishu";
+
   // Drop final payloads only when block streaming succeeded end-to-end.
   // If streaming aborted (e.g., timeout), fall back to final payloads.
+  //
+  // Feishu keeps the final payload even after block streaming. Its streaming-card
+  // delivery path uses the final payload to reliably close/update the card, and
+  // dropping the final here can leave users with typing-only/no-reply turns.
   const shouldDropFinalPayloads =
+    !preservesFinalPayloadAfterBlockStreaming &&
     params.blockStreamingEnabled &&
     Boolean(params.blockReplyPipeline?.didStream()) &&
     !params.blockReplyPipeline?.isAborted();
   const messagingToolSentTexts = params.messagingToolSentTexts ?? [];
   const messagingToolSentTargets = params.messagingToolSentTargets ?? [];
   const suppressMessagingToolReplies = shouldSuppressMessagingToolReplies({
-    messageProvider: resolveOriginMessageProvider({
-      originatingChannel: params.originatingChannel,
-      provider: params.messageProvider,
-    }),
+    messageProvider: resolvedMessageProvider,
     messagingToolSentTargets,
     originatingTo: resolveOriginMessageTo({
       originatingTo: params.originatingTo,
