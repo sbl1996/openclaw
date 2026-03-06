@@ -153,6 +153,23 @@ function createChatQueue() {
   };
 }
 
+export function resolveFeishuChatQueueKey(params: {
+  chatId?: string;
+  rootId?: string;
+  text?: string;
+  hasControlCommand: (text: string) => boolean;
+}): string {
+  const chatId = params.chatId?.trim() || "unknown";
+  const rootId = params.rootId?.trim();
+  const text = params.text?.trim() || "";
+  if (!text || !params.hasControlCommand(text)) {
+    return chatId;
+  }
+  // Let /stop, /status, and similar control commands bypass the main per-chat
+  // serial queue so they can interrupt or inspect long-running turns.
+  return rootId ? `${chatId}:control:thread:${rootId}` : `${chatId}:control`;
+}
+
 function mergeFeishuDebounceMentions(
   entries: FeishuMessageEvent[],
 ): FeishuMessageEvent["message"]["mentions"] | undefined {
@@ -242,6 +259,13 @@ function registerEventHandlers(
   const enqueue = createChatQueue();
   const dispatchFeishuMessage = async (event: FeishuMessageEvent) => {
     const chatId = event.message.chat_id?.trim() || "unknown";
+    const parsed = parseFeishuMessageEvent(event, botOpenIds.get(accountId));
+    const queueKey = resolveFeishuChatQueueKey({
+      chatId,
+      rootId: event.message.root_id,
+      text: parsed.content,
+      hasControlCommand: (text) => core.channel.text.hasControlCommand(text, cfg),
+    });
     const task = () =>
       handleFeishuMessage({
         cfg,
@@ -252,7 +276,7 @@ function registerEventHandlers(
         chatHistories,
         accountId,
       });
-    await enqueue(chatId, task);
+    await enqueue(queueKey, task);
   };
   const resolveSenderDebounceId = (event: FeishuMessageEvent): string | undefined => {
     const senderId =
