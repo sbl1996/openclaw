@@ -429,6 +429,7 @@ const ToolExecBaseShape = {
   safeBinProfiles: z.record(z.string(), ToolExecSafeBinProfileSchema).optional(),
   backgroundMs: z.number().int().positive().optional(),
   timeoutSec: z.number().int().positive().optional(),
+  maxPollWaitMs: z.number().int().nonnegative().optional(),
   cleanupMs: z.number().int().positive().optional(),
   notifyOnExit: z.boolean().optional(),
   notifyOnExitEmptySuccess: z.boolean().optional(),

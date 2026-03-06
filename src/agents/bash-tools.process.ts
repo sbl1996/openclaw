@@ -21,6 +21,7 @@ import { encodeKeySequence, encodePaste, hasCursorModeSensitiveKeys } from "./pt
 
 export type ProcessToolDefaults = {
   cleanupMs?: number;
+  maxPollWaitMs?: number;
   scopeKey?: string;
 };
 
@@ -71,16 +72,16 @@ const processSchema = Type.Object({
   ),
 });
 
-const MAX_POLL_WAIT_MS = 120_000;
+const DEFAULT_MAX_POLL_WAIT_MS = 120_000;
 
-function resolvePollWaitMs(value: unknown) {
+function resolvePollWaitMs(value: unknown, maxPollWaitMs: number) {
   if (typeof value === "number" && Number.isFinite(value)) {
-    return Math.max(0, Math.min(MAX_POLL_WAIT_MS, Math.floor(value)));
+    return Math.max(0, Math.min(maxPollWaitMs, Math.floor(value)));
   }
   if (typeof value === "string") {
     const parsed = Number.parseInt(value.trim(), 10);
     if (Number.isFinite(parsed)) {
-      return Math.max(0, Math.min(MAX_POLL_WAIT_MS, parsed));
+      return Math.max(0, Math.min(maxPollWaitMs, parsed));
     }
   }
   return 0;
@@ -123,6 +124,10 @@ export function createProcessTool(
   if (defaults?.cleanupMs !== undefined) {
     setJobTtlMs(defaults.cleanupMs);
   }
+  const maxPollWaitMs =
+    typeof defaults?.maxPollWaitMs === "number" && Number.isFinite(defaults.maxPollWaitMs)
+      ? Math.max(0, Math.floor(defaults.maxPollWaitMs))
+      : DEFAULT_MAX_POLL_WAIT_MS;
   const scopeKey = defaults?.scopeKey;
   const supervisor = getProcessSupervisor();
   const isInScope = (session?: { scopeKey?: string } | null) =>
@@ -326,7 +331,7 @@ export function createProcessTool(
           if (!scopedSession.backgrounded) {
             return failText(`Session ${params.sessionId} is not backgrounded.`);
           }
-          const pollWaitMs = resolvePollWaitMs(params.timeout);
+          const pollWaitMs = resolvePollWaitMs(params.timeout, maxPollWaitMs);
           if (pollWaitMs > 0 && !scopedSession.exited) {
             const deadline = Date.now() + pollWaitMs;
             while (!scopedSession.exited && Date.now() < deadline) {

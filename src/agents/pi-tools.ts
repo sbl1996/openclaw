@@ -154,6 +154,7 @@ function resolveExecConfig(params: { cfg?: OpenClawConfig; agentId?: string }) {
     approvalRunningNoticeMs:
       agentExec?.approvalRunningNoticeMs ?? globalExec?.approvalRunningNoticeMs,
     cleanupMs: agentExec?.cleanupMs ?? globalExec?.cleanupMs,
+    maxPollWaitMs: agentExec?.maxPollWaitMs ?? globalExec?.maxPollWaitMs,
     notifyOnExit: agentExec?.notifyOnExit ?? globalExec?.notifyOnExit,
     notifyOnExitEmptySuccess:
       agentExec?.notifyOnExitEmptySuccess ?? globalExec?.notifyOnExitEmptySuccess,
@@ -457,6 +458,7 @@ export function createOpenClawCodingTools(options?: {
   });
   const processTool = createProcessTool({
     cleanupMs: cleanupMsOverride ?? execConfig.cleanupMs,
+    maxPollWaitMs: execConfig.maxPollWaitMs,
     scopeKey,
   });
   const applyPatchTool =
