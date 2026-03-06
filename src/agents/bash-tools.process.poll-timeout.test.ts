@@ -14,8 +14,11 @@ afterEach(() => {
   resetDiagnosticSessionStateForTest();
 });
 
-function createProcessSessionHarness(sessionId: string) {
-  const processTool = createProcessTool();
+function createProcessSessionHarness(
+  sessionId: string,
+  defaults?: Parameters<typeof createProcessTool>[0],
+) {
+  const processTool = createProcessTool(defaults);
   const session = createProcessSessionFixture({
     id: sessionId,
     command: "test",
@@ -99,6 +102,53 @@ test("process poll accepts string timeout values", async () => {
     timeout: "2000",
     advanceMs: 350,
   });
+});
+
+test("process poll caps wait time at the default maximum", async () => {
+  vi.useFakeTimers();
+  try {
+    const { processTool } = createProcessSessionHarness("sess-cap-default");
+    const pollPromise = pollSession(
+      processTool,
+      "toolcall-cap-default",
+      "sess-cap-default",
+      999999,
+    );
+    let resolved = false;
+    void pollPromise.finally(() => {
+      resolved = true;
+    });
+
+    await vi.advanceTimersByTimeAsync(119_000);
+    expect(resolved).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1_500);
+    expect(resolved).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("process poll honors configured max wait time", async () => {
+  vi.useFakeTimers();
+  try {
+    const { processTool } = createProcessSessionHarness("sess-cap-custom", {
+      maxPollWaitMs: 300_000,
+    });
+    const pollPromise = pollSession(processTool, "toolcall-cap-custom", "sess-cap-custom", 999999);
+    let resolved = false;
+    void pollPromise.finally(() => {
+      resolved = true;
+    });
+
+    await vi.advanceTimersByTimeAsync(121_000);
+    expect(resolved).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(180_000);
+    expect(resolved).toBe(true);
+  } finally {
+    vi.useRealTimers();
+  }
 });
 
 test("process poll exposes adaptive retryInMs for repeated no-output polls", async () => {
