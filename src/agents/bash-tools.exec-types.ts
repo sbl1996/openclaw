@@ -14,6 +14,7 @@ export type ExecToolDefaults = {
   safeBinProfiles?: Record<string, SafeBinProfileFixture>;
   agentId?: string;
   backgroundMs?: number;
+  maxYieldMs?: number;
   timeoutSec?: number;
   approvalRunningNoticeMs?: number;
   sandbox?: BashSandboxConfig;

@@ -150,6 +150,7 @@ function resolveExecConfig(params: { cfg?: OpenClawConfig; agentId?: string }) {
       local: agentExec,
     }),
     backgroundMs: agentExec?.backgroundMs ?? globalExec?.backgroundMs,
+    maxYieldMs: agentExec?.maxYieldMs ?? globalExec?.maxYieldMs,
     timeoutSec: agentExec?.timeoutSec ?? globalExec?.timeoutSec,
     approvalRunningNoticeMs:
       agentExec?.approvalRunningNoticeMs ?? globalExec?.approvalRunningNoticeMs,
@@ -439,6 +440,7 @@ export function createOpenClawCodingTools(options?: {
     currentThreadTs: options?.currentThreadTs,
     accountId: options?.agentAccountId,
     backgroundMs: options?.exec?.backgroundMs ?? execConfig.backgroundMs,
+    maxYieldMs: options?.exec?.maxYieldMs ?? execConfig.maxYieldMs,
     timeoutSec: options?.exec?.timeoutSec ?? execConfig.timeoutSec,
     approvalRunningNoticeMs:
       options?.exec?.approvalRunningNoticeMs ?? execConfig.approvalRunningNoticeMs,

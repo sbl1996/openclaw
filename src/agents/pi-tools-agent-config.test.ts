@@ -639,6 +639,38 @@ describe("Agent-specific tool filtering", () => {
     expect(resultDetails?.status).toBe("completed");
   });
 
+  it("applies tools.exec.maxYieldMs to exec backgrounding", async () => {
+    const cfg: OpenClawConfig = {
+      tools: {
+        exec: {
+          security: "full",
+          ask: "off",
+          maxYieldMs: 20,
+        },
+      },
+    };
+
+    const tools = createOpenClawCodingTools({
+      config: cfg,
+      sessionKey: "agent:main:main",
+      workspaceDir: "/tmp/test-main-max-yield",
+      agentDir: "/tmp/agent-main-max-yield",
+    });
+    const execTool = tools.find((tool) => tool.name === "exec");
+    expect(execTool).toBeDefined();
+
+    const result = await execTool?.execute("call-max-yield", {
+      command:
+        process.platform === "win32"
+          ? "Start-Sleep -Milliseconds 30; Write-Output done"
+          : "sleep 0.03; echo done",
+      yieldMs: 50,
+    });
+
+    const resultDetails = result?.details as { status?: string } | undefined;
+    expect(resultDetails?.status).toBe("running");
+  });
+
   it("keeps sandbox as the implicit exec host default without forcing gateway approvals", async () => {
     const tools = createOpenClawCodingTools({
       config: {},

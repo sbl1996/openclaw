@@ -428,6 +428,7 @@ const ToolExecBaseShape = {
   safeBinTrustedDirs: z.array(z.string()).optional(),
   safeBinProfiles: z.record(z.string(), ToolExecSafeBinProfileSchema).optional(),
   backgroundMs: z.number().int().positive().optional(),
+  maxYieldMs: z.number().int().positive().optional(),
   timeoutSec: z.number().int().positive().optional(),
   maxPollWaitMs: z.number().int().nonnegative().optional(),
   cleanupMs: z.number().int().positive().optional(),

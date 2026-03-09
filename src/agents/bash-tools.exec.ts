@@ -177,11 +177,15 @@ export function createExecTool(
   defaults?: ExecToolDefaults,
   // oxlint-disable-next-line typescript/no-explicit-any
 ): AgentTool<any, ExecToolDetails> {
+  const maxYieldMs =
+    typeof defaults?.maxYieldMs === "number" && Number.isFinite(defaults.maxYieldMs)
+      ? Math.max(10, Math.floor(defaults.maxYieldMs))
+      : 120_000;
   const defaultBackgroundMs = clampWithDefault(
     defaults?.backgroundMs ?? readEnvInt("PI_BASH_YIELD_MS"),
     10_000,
     10,
-    120_000,
+    maxYieldMs,
   );
   const allowBackground = defaults?.allowBackground ?? true;
   const defaultTimeoutSec =
@@ -267,7 +271,7 @@ export function createExecTool(
               params.yieldMs ?? defaultBackgroundMs,
               defaultBackgroundMs,
               10,
-              120_000,
+              maxYieldMs,
             )
         : null;
       const elevatedDefaults = defaults?.elevated;

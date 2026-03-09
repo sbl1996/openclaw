@@ -249,6 +249,8 @@ export type ExecToolConfig = {
   safeBinProfiles?: Record<string, SafeBinProfileFixture>;
   /** Default time (ms) before an exec command auto-backgrounds. */
   backgroundMs?: number;
+  /** Maximum time (ms) an exec yieldMs request may wait before auto-backgrounding. */
+  maxYieldMs?: number;
   /** Default timeout (seconds) before auto-killing exec commands. */
   timeoutSec?: number;
   /** Maximum time (ms) a single process.poll call may wait before returning. */

@@ -453,7 +453,43 @@ describe("exec tool backgrounding", () => {
     expect(hasSession(sessions, sessionId)).toBe(true);
     expect(sessions.find((s) => s.sessionId === sessionId)?.name).toBe(COMMAND_ECHO_HELLO);
   });
+  it("uses default timeout when timeout is omitted", async () => {
+    const customBash = createTestExecTool({
+      timeoutSec: 0.05,
+      backgroundMs: 10,
+      allowBackground: false,
+    });
+    await expect(executeExecCommand(customBash, longDelayCmd)).rejects.toThrow(/timed out/i);
+    await expect(executeExecCommand(customBash, longDelayCmd)).rejects.toThrow(
+      /re-run with a higher timeout/i,
+    );
+  });
 
+  it("caps yieldMs using maxYieldMs", async () => {
+    const customBash = createTestExecTool({
+      allowBackground: true,
+      maxYieldMs: 20,
+    });
+    const result = await executeExecCommand(
+      customBash,
+      joinCommands([isWin ? "Start-Sleep -Milliseconds 30" : "sleep 0.03", shellEcho(OUTPUT_DONE)]),
+      { yieldMs: 50 },
+    );
+
+    expect(result.details.status).toBe(PROCESS_STATUS_RUNNING);
+    const sessionId = requireRunningSessionId(result);
+
+    let output = "";
+    await expect
+      .poll(async () => {
+        const pollResult = await pollProcessSession({ tool: processTool, sessionId });
+        output = pollResult.output ?? "";
+        return pollResult.status;
+      }, BACKGROUND_POLL_OPTIONS)
+      .toBe(PROCESS_STATUS_COMPLETED);
+
+    expect(output).toContain(OUTPUT_DONE);
+  });
   it.each<DisallowedElevationCase>(DISALLOWED_ELEVATION_CASES)(
     "$label",
     runDisallowedElevationCase,
