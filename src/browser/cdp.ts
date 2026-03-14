@@ -104,6 +104,7 @@ export async function createTargetViaCdp(opts: {
   cdpUrl: string;
   url: string;
   ssrfPolicy?: SsrFPolicy;
+  background?: boolean;
 }): Promise<{ targetId: string }> {
   await assertBrowserNavigationAllowed({
     url: opts.url,
@@ -128,7 +129,10 @@ export async function createTargetViaCdp(opts: {
   }
 
   return await withCdpSocket(wsUrl, async (send) => {
-    const created = (await send("Target.createTarget", { url: opts.url })) as {
+    const created = (await send("Target.createTarget", {
+      url: opts.url,
+      ...(opts.background === true ? { background: true } : {}),
+    })) as {
       targetId?: string;
     };
     const targetId = String(created?.targetId ?? "").trim();

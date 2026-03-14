@@ -77,6 +77,7 @@ Browser settings live in `~/.openclaw/openclaw.json`.
     defaultProfile: "openclaw",
     color: "#FF4500",
     headless: false,
+    openInBackground: false,
     noSandbox: false,
     attachOnly: false,
     executablePath: "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
@@ -113,6 +114,7 @@ Notes:
 - In strict SSRF mode, remote CDP endpoint discovery/probes (`cdpUrl`, including `/json/version` lookups) are checked too.
 - `browser.ssrfPolicy.dangerouslyAllowPrivateNetwork` defaults to `true` (trusted-network model). Set it to `false` for strict public-only browsing.
 - `browser.ssrfPolicy.allowPrivateNetwork` remains supported as a legacy alias for compatibility.
+- `openInBackground: true` asks supported browser backends to create new tabs without activating the browser window.
 - `attachOnly: true` means “never launch a local browser; only attach if it is already running.”
 - `color` + per-profile `color` tint the browser UI so you can see which profile is active.
 - Default profile is `openclaw` (OpenClaw-managed standalone browser). Use `defaultProfile: "user"` to opt into the signed-in user browser.

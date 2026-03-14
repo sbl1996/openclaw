@@ -20,6 +20,7 @@ import { CDP_PORT_RANGE_START } from "./profiles.js";
 export type ResolvedBrowserConfig = {
   enabled: boolean;
   evaluateEnabled: boolean;
+  openInBackground: boolean;
   controlPort: number;
   cdpPortRangeStart: number;
   cdpPortRangeEnd: number;
@@ -204,6 +205,7 @@ export function resolveBrowserConfig(
 ): ResolvedBrowserConfig {
   const enabled = cfg?.enabled ?? DEFAULT_OPENCLAW_BROWSER_ENABLED;
   const evaluateEnabled = cfg?.evaluateEnabled ?? DEFAULT_BROWSER_EVALUATE_ENABLED;
+  const openInBackground = cfg?.openInBackground === true;
   const gatewayPort = resolveGatewayPort(rootConfig);
   const controlPort = deriveDefaultBrowserControlPort(gatewayPort ?? DEFAULT_BROWSER_CONTROL_PORT);
   const defaultColor = normalizeHexColor(cfg?.color);
@@ -283,6 +285,7 @@ export function resolveBrowserConfig(
   return {
     enabled,
     evaluateEnabled,
+    openInBackground,
     controlPort,
     cdpPortRangeStart,
     cdpPortRangeEnd,

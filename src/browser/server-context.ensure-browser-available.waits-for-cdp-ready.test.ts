@@ -30,6 +30,7 @@ function makeBrowserState(): BrowserServerState {
       cdpPortRangeStart: 18800,
       cdpPortRangeEnd: 18810,
       evaluateEnabled: false,
+      openInBackground: false,
       remoteCdpTimeoutMs: 1500,
       remoteCdpHandshakeTimeoutMs: 3000,
       extraArgs: [],

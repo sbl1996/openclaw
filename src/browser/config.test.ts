@@ -32,6 +32,7 @@ describe("browser config", () => {
     expect(resolveProfile(resolved, "chrome-relay")).toBe(null);
     expect(resolved.remoteCdpTimeoutMs).toBe(1500);
     expect(resolved.remoteCdpHandshakeTimeoutMs).toBe(3000);
+    expect(resolved.openInBackground).toBe(false);
   });
 
   it("derives default ports from OPENCLAW_GATEWAY_PORT when unset", () => {
@@ -88,6 +89,13 @@ describe("browser config", () => {
     });
     expect(resolved.remoteCdpTimeoutMs).toBe(2200);
     expect(resolved.remoteCdpHandshakeTimeoutMs).toBe(5000);
+  });
+
+  it("supports browser.openInBackground", () => {
+    const resolved = resolveBrowserConfig({
+      openInBackground: true,
+    });
+    expect(resolved.openInBackground).toBe(true);
   });
 
   it("falls back to default color for invalid hex", () => {

@@ -10,6 +10,7 @@ function buildResolvedConfig(): ResolvedBrowserConfig {
   return {
     enabled: true,
     evaluateEnabled: false,
+    openInBackground: false,
     controlPort: 0,
     cdpPortRangeStart: 18800,
     cdpPortRangeEnd: 18899,

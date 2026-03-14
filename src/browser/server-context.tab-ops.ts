@@ -178,6 +178,7 @@ export function createProfileTabOps({
     const createdViaCdp = await createTargetViaCdp({
       cdpUrl: profile.cdpUrl,
       url,
+      background: state().resolved.openInBackground,
       ...ssrfPolicyOpts,
     })
       .then((r) => r.targetId)

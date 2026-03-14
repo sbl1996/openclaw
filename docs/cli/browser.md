@@ -40,6 +40,8 @@ Profiles are named browser routing configs. In practice:
 - `user`: controls your existing signed-in Chrome session via Chrome DevTools MCP.
 - custom CDP profiles: point at a local or remote CDP endpoint.
 
+If new tabs keep stealing focus, set `browser.openInBackground: true` in your config. When the active browser backend supports it, `openclaw browser open ...` and `openclaw browser tab new` will open without activating the window.
+
 ```bash
 openclaw browser profiles
 openclaw browser create-profile --name work --color "#FF5A36"

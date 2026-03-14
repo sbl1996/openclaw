@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { type WebSocket, WebSocketServer } from "ws";
 import { SsrFBlockedError } from "../infra/net/ssrf.js";
 import { rawDataToString } from "../infra/ws.js";
+import { withEnvAsync } from "../test-utils/env.js";
 import { isWebSocketUrl } from "./cdp.helpers.js";
 import { createTargetViaCdp, evaluateJavaScript, normalizeCdpWsUrl, snapshotAria } from "./cdp.js";
 import { parseHttpUrl } from "./config.js";
@@ -92,9 +93,41 @@ describe("cdp", () => {
     const created = await createTargetViaCdp({
       cdpUrl: `http://127.0.0.1:${httpPort}`,
       url: "https://example.com",
+      ssrfPolicy: { allowPrivateNetwork: true },
     });
 
     expect(created.targetId).toBe("TARGET_123");
+  });
+
+  it("passes background=true to Target.createTarget when requested", async () => {
+    const wsPort = await startWsServerWithMessages((msg, socket) => {
+      if (msg.method !== "Target.createTarget") {
+        return;
+      }
+      expect(msg.params).toEqual({
+        url: "https://example.com",
+        background: true,
+      });
+      socket.send(
+        JSON.stringify({
+          id: msg.id,
+          result: { targetId: "TARGET_BG" },
+        }),
+      );
+    });
+
+    const httpPort = await startVersionHttpServer({
+      webSocketDebuggerUrl: `ws://127.0.0.1:${wsPort}/devtools/browser/TEST`,
+    });
+
+    const created = await createTargetViaCdp({
+      cdpUrl: `http://127.0.0.1:${httpPort}`,
+      url: "https://example.com",
+      background: true,
+      ssrfPolicy: { allowPrivateNetwork: true },
+    });
+
+    expect(created.targetId).toBe("TARGET_BG");
   });
 
   it("creates a target via direct WebSocket URL (skips /json/version)", async () => {
@@ -115,6 +148,7 @@ describe("cdp", () => {
       const created = await createTargetViaCdp({
         cdpUrl: `ws://127.0.0.1:${wsPort}/devtools/browser/TEST`,
         url: "https://example.com",
+        ssrfPolicy: { allowPrivateNetwork: true },
       });
 
       expect(created.targetId).toBe("TARGET_WS_DIRECT");
@@ -148,6 +182,7 @@ describe("cdp", () => {
     const created = await createTargetViaCdp({
       cdpUrl: `ws://127.0.0.1:${wsPort}/devtools/browser/TEST?apiKey=secret123`,
       url: "https://example.com",
+      ssrfPolicy: { allowPrivateNetwork: true },
     });
     expect(created.targetId).toBe("T_QP");
     // The WebSocket upgrade request should have been made to the URL with the query param
@@ -155,34 +190,44 @@ describe("cdp", () => {
   });
 
   it("still enforces SSRF policy for direct WebSocket URLs", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    try {
-      await expect(
-        createTargetViaCdp({
-          cdpUrl: "ws://127.0.0.1:9222",
-          url: "http://127.0.0.1:8080",
-        }),
-      ).rejects.toBeInstanceOf(SsrFBlockedError);
-      // SSRF check happens before any connection attempt
-      expect(fetchSpy).not.toHaveBeenCalled();
-    } finally {
-      fetchSpy.mockRestore();
-    }
+    await withEnvAsync(
+      { HTTP_PROXY: undefined, HTTPS_PROXY: undefined, ALL_PROXY: undefined },
+      async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch");
+        try {
+          await expect(
+            createTargetViaCdp({
+              cdpUrl: "ws://127.0.0.1:9222",
+              url: "http://127.0.0.1:8080",
+            }),
+          ).rejects.toBeInstanceOf(SsrFBlockedError);
+          // SSRF check happens before any connection attempt
+          expect(fetchSpy).not.toHaveBeenCalled();
+        } finally {
+          fetchSpy.mockRestore();
+        }
+      },
+    );
   });
 
   it("blocks private navigation targets by default", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    try {
-      await expect(
-        createTargetViaCdp({
-          cdpUrl: "http://127.0.0.1:9222",
-          url: "http://127.0.0.1:8080",
-        }),
-      ).rejects.toBeInstanceOf(SsrFBlockedError);
-      expect(fetchSpy).not.toHaveBeenCalled();
-    } finally {
-      fetchSpy.mockRestore();
-    }
+    await withEnvAsync(
+      { HTTP_PROXY: undefined, HTTPS_PROXY: undefined, ALL_PROXY: undefined },
+      async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch");
+        try {
+          await expect(
+            createTargetViaCdp({
+              cdpUrl: "http://127.0.0.1:9222",
+              url: "http://127.0.0.1:8080",
+            }),
+          ).rejects.toBeInstanceOf(SsrFBlockedError);
+          expect(fetchSpy).not.toHaveBeenCalled();
+        } finally {
+          fetchSpy.mockRestore();
+        }
+      },
+    );
   });
 
   it("blocks unsupported non-network navigation URLs", async () => {
@@ -259,6 +304,7 @@ describe("cdp", () => {
       createTargetViaCdp({
         cdpUrl: `http://127.0.0.1:${httpPort}`,
         url: "https://example.com",
+        ssrfPolicy: { allowPrivateNetwork: true },
       }),
     ).rejects.toThrow("CDP /json/version missing webSocketDebuggerUrl");
   });

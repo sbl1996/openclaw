@@ -252,6 +252,8 @@ export const FIELD_HELP: Record<string, string> = {
     "Explicit browser executable path when auto-discovery is insufficient for your host environment. Use absolute stable paths so launch behavior stays deterministic across restarts.",
   "browser.headless":
     "Forces browser launch in headless mode when the local launcher starts browser instances. Keep headless enabled for server environments and disable only when visible UI debugging is required.",
+  "browser.openInBackground":
+    "Requests background tab creation for browser open/new-tab operations when the underlying browser control path supports it. Use this to reduce visible window focus steals during agent-driven browsing.",
   "browser.noSandbox":
     "Disables Chromium sandbox isolation flags for environments where sandboxing fails at runtime. Keep this off whenever possible because process isolation protections are reduced.",
   "browser.attachOnly":

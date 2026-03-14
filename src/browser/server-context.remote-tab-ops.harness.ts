@@ -23,6 +23,7 @@ export function makeState(
       remoteCdpTimeoutMs: 1500,
       remoteCdpHandshakeTimeoutMs: 3000,
       evaluateEnabled: false,
+      openInBackground: false,
       extraArgs: [],
       color: "#FF4500",
       headless: true,

@@ -119,6 +119,7 @@ export const FIELD_LABELS: Record<string, string> = {
   "browser.color": "Browser Accent Color",
   "browser.executablePath": "Browser Executable Path",
   "browser.headless": "Browser Headless Mode",
+  "browser.openInBackground": "Browser Open In Background",
   "browser.noSandbox": "Browser No-Sandbox Mode",
   "browser.attachOnly": "Browser Attach-only Mode",
   "browser.cdpPortRangeStart": "Browser CDP Port Range Start",

@@ -299,4 +299,29 @@ describe("browser server-context remote profile tab operations", () => {
     expect(opened.targetId).toBe("T1");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("does not pass background handling into Playwright-backed remote opens", async () => {
+    const createPageViaPlaywright = vi.fn(async () => ({
+      targetId: "T2",
+      title: "Tab 2",
+      url: "https://example.com",
+      type: "page",
+    }));
+
+    vi.spyOn(pwAiModule, "getPwAiModule").mockResolvedValue({
+      listPagesViaPlaywright: vi.fn(async () => []),
+      createPageViaPlaywright,
+    } as unknown as Awaited<ReturnType<typeof pwAiModule.getPwAiModule>>);
+
+    const { state, remote } = createRemoteRouteHarness();
+    state.resolved.openInBackground = true;
+
+    await remote.openTab("https://example.com");
+
+    expect(createPageViaPlaywright).toHaveBeenCalledWith({
+      cdpUrl: "https://browserless.example/chrome?token=abc",
+      url: "https://example.com",
+      ssrfPolicy: { allowPrivateNetwork: true },
+    });
+  });
 });

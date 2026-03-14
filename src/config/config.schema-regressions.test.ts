@@ -175,6 +175,16 @@ describe("config schema regressions", () => {
     expect(res.ok).toBe(true);
   });
 
+  it("accepts browser.openInBackground as a boolean", () => {
+    const res = validateConfigObject({
+      browser: {
+        openInBackground: true,
+      },
+    });
+
+    expect(res.ok).toBe(true);
+  });
+
   it("rejects browser.extraArgs with non-array value", () => {
     const res = validateConfigObject({
       browser: {
