@@ -40,6 +40,7 @@ function makeState(): BrowserServerState {
       color: "#FF4500",
       headless: false,
       noSandbox: false,
+      openInBackground: false,
       attachOnly: false,
       defaultProfile: "chrome-live",
       profiles: {

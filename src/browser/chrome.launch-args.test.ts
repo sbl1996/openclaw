@@ -19,6 +19,7 @@ describe("browser chrome launch args", () => {
         color: "#FF4500",
         headless: false,
         noSandbox: false,
+        openInBackground: false,
         attachOnly: false,
         ssrfPolicy: { allowPrivateNetwork: true },
         defaultProfile: "openclaw",

@@ -22,6 +22,7 @@ const {
 const {
   normalizeBraveLanguageParams,
   normalizeFreshness,
+  resolveSearchProxy,
   resolveBraveMode,
   mapBraveLlmContextResults,
 } = braveTesting;

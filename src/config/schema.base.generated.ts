@@ -379,6 +379,9 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
           evaluateEnabled: {
             type: "boolean",
           },
+          openInBackground: {
+            type: "boolean",
+          },
           cdpUrl: {
             type: "string",
           },
@@ -4763,9 +4766,19 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
                           exclusiveMinimum: 0,
                           maximum: 9007199254740991,
                         },
+                        maxYieldMs: {
+                          type: "integer",
+                          exclusiveMinimum: 0,
+                          maximum: 9007199254740991,
+                        },
                         timeoutSec: {
                           type: "integer",
                           exclusiveMinimum: 0,
+                          maximum: 9007199254740991,
+                        },
+                        maxPollWaitMs: {
+                          type: "integer",
+                          minimum: 0,
                           maximum: 9007199254740991,
                         },
                         cleanupMs: {
@@ -5045,6 +5058,9 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
                     type: "boolean",
                   },
                   provider: {
+                    type: "string",
+                  },
+                  proxy: {
                     type: "string",
                   },
                   maxResults: {
@@ -7245,9 +7261,19 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
                 exclusiveMinimum: 0,
                 maximum: 9007199254740991,
               },
+              maxYieldMs: {
+                type: "integer",
+                exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
               timeoutSec: {
                 type: "integer",
                 exclusiveMinimum: 0,
+                maximum: 9007199254740991,
+              },
+              maxPollWaitMs: {
+                type: "integer",
+                minimum: 0,
                 maximum: 9007199254740991,
               },
               cleanupMs: {
@@ -12367,6 +12393,11 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
       help: "Forces browser launch in headless mode when the local launcher starts browser instances. Keep headless enabled for server environments and disable only when visible UI debugging is required.",
       tags: ["advanced"],
     },
+    "browser.openInBackground": {
+      label: "Browser Open In Background",
+      help: "Requests background tab creation for browser open/new-tab operations when the underlying browser control path supports it. Use this to reduce visible window focus steals during agent-driven browsing.",
+      tags: ["advanced"],
+    },
     "browser.noSandbox": {
       label: "Browser No-Sandbox Mode",
       help: "Disables Chromium sandbox isolation flags for environments where sandboxing fails at runtime. Keep this off whenever possible because process isolation protections are reduced.",
@@ -12916,6 +12947,17 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
       label: "Web Search Provider",
       help: "Search provider id. Auto-detected from available API keys if omitted.",
       tags: ["tools"],
+    },
+    "tools.web.search.proxy": {
+      label: "Web Search Proxy URL",
+      help: "Optional HTTP(S) proxy URL for web_search requests (currently used by Brave provider).",
+      tags: ["tools"],
+    },
+    "tools.web.search.apiKey": {
+      label: "Brave Search API Key",
+      help: "Brave Search API key (fallback: BRAVE_API_KEY env var).",
+      tags: ["security", "auth", "tools"],
+      sensitive: true,
     },
     "tools.web.search.maxResults": {
       label: "Web Search Max Results",
@@ -16151,10 +16193,6 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
     "agents.list[].sandbox.ssh.knownHostsData": {
       sensitive: true,
       tags: ["security", "storage"],
-    },
-    "tools.web.search.apiKey": {
-      sensitive: true,
-      tags: ["security", "auth", "tools"],
     },
     "tools.web.search.brave.apiKey": {
       sensitive: true,

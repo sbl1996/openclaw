@@ -18,6 +18,7 @@ const defaultShell = isWin
 // PowerShell: Start-Sleep for delays, ; for command separation, $null for null device
 const shortDelayCmd = isWin ? "Start-Sleep -Milliseconds 4" : "sleep 0.004";
 const yieldDelayCmd = isWin ? "Start-Sleep -Milliseconds 16" : "sleep 0.016";
+const longDelayCmd = isWin ? "Start-Sleep -Milliseconds 100" : "sleep 0.1";
 const POLL_INTERVAL_MS = 15;
 const BACKGROUND_POLL_TIMEOUT_MS = isWin ? 8000 : 1200;
 const NOTIFY_EVENT_TIMEOUT_MS = isWin ? 12_000 : 5_000;
@@ -459,10 +460,10 @@ describe("exec tool backgrounding", () => {
       backgroundMs: 10,
       allowBackground: false,
     });
-    await expect(executeExecCommand(customBash, longDelayCmd)).rejects.toThrow(/timed out/i);
-    await expect(executeExecCommand(customBash, longDelayCmd)).rejects.toThrow(
-      /re-run with a higher timeout/i,
-    );
+    const result = await executeExecCommand(customBash, longDelayCmd);
+    expect(result.details.status).toBe(PROCESS_STATUS_FAILED);
+    expect(readTextContent(result.content) ?? "").toMatch(/timed out/i);
+    expect(readTextContent(result.content) ?? "").toMatch(/re-run with a higher timeout/i);
   });
 
   it("caps yieldMs using maxYieldMs", async () => {
